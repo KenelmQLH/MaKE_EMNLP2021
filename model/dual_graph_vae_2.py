@@ -206,7 +206,7 @@ class Attention(nn.Module):
         # log_score = masked_log_softmax(u_i, input_node_mask, dim=-1)
         return log_score
 
-class DecoderVAE(nn.Module):
+class DecoderVAE(nn.Module): # 解码单元格
     def __init__(self, embedding_dim, hidden_size, z_dim, output_size, dropout=0.1):
         super(DecoderVAE, self).__init__()
         self.z_dim = z_dim
@@ -335,7 +335,7 @@ class Graph2seq(nn.Module):
         self.encoder_sns = EncoderGGNN(vocab_size, embedding_dim, hidden_size, n_hop)
         # this is sentence encoder for training VAE posterior
         self.out_enc = WordRNN(vocab_size=vocab_size, embedding_dim=embedding_dim, hidden_dim=hidden_size,dropout=dropout)
-        self.decoder = DecoderVAE(embedding_dim, hidden_size, z_dim,output_size,dropout)
+        self.decoder = DecoderVAE(embedding_dim, hidden_size, z_dim,output_size,dropout) # 解码单元格
         self.embedding = nn.Embedding(vocab_size, embedding_dim)
         self.teacher_forcing = teacher_forcing
         # sample mu and logvars
@@ -395,23 +395,24 @@ class Graph2seq(nn.Module):
         z_sample, teacher_forcing_ratio, device, input_equ_node_mask, input_sns_node_mask):
         bs, seq_len = dec_input_var.shape
         dec_hidden = torch.cat([cond_embedding, z_sample], dim=1)
-        dec_input = torch.LongTensor([Constants.BOS] * bs).to(device)
+        dec_input = torch.LongTensor([Constants.BOS] * bs).to(device) # 初始化解码输入
         predicted_logits, graph_attntion = [], [] # use this to record the attention score
         # d_dec = d_initial
-        for di in range(seq_len):
-            if random.random() < self.teacher_forcing:
+        for di in range(seq_len): # 一个一个的解码
+            if random.random() < self.teacher_forcing: # teacher forcing
                 prev_y = self.embedding(dec_input) # embedding look up table
                 dec_output, dec_hidden, plan_attn = self.decoder(prev_y, dec_hidden, equ_encoder_outputs, sns_encoder_outputs, z_sample,input_equ_node_mask, input_sns_node_mask)
                 predicted_logits.append(dec_output.squeeze(1))
                 graph_attntion.append(plan_attn)
-                dec_input = dec_input_var[:,di]
+
+                dec_input = dec_input_var[:,di] # 下一个解码输入
                 dec_hidden = dec_hidden.squeeze(0)
-            else:
+            else: # No teacher forcing
                 prev_y = self.embedding(dec_input) # embedding look up table
                 dec_output, dec_hidden, plan_attn = self.decoder(prev_y, dec_hidden, equ_encoder_outputs, sns_encoder_outputs, z_sample,input_equ_node_mask, input_sns_node_mask)
-                
                 predicted_logits.append(dec_output.squeeze(1))
                 graph_attntion.append(plan_attn)
+
                 max_value, max_index = dec_output.squeeze(1).max(dim=-1)
                 dec_input = max_index
                 dec_hidden = dec_hidden.squeeze(0)
@@ -442,7 +443,7 @@ class Graph2seq(nn.Module):
         dec_ids, graph_attntion = [],[]
         curr_token = Constants.BOS
         curr_dec_idx = 0
-        dec_input_var = torch.LongTensor([curr_token]).to(device)
+        dec_input_var = torch.LongTensor([curr_token]).to(device) # 解码器 初始 输入
         dec_hidden = torch.cat([cond_embedding,latent_sample], dim=1)
         
         while (curr_token != Constants.EOS and curr_dec_idx <=max_tgt_len):
@@ -457,7 +458,7 @@ class Graph2seq(nn.Module):
             max_value, max_index = dec_output.squeeze(1).max(dim=-1)
             #max_index = F.softmax(dec_output, dim=-1).squeeze(1).multinomial(1)
             dec_ids.append(max_index.squeeze().item())
-            dec_input_var = max_index
+            dec_input_var = max_index # 解码器 下一个 输入
             # print(max_index)
             dec_hidden = dec_hidden.squeeze(1)
             curr_dec_idx += 1

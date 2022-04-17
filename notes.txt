@@ -1,0 +1,37 @@
+
+
+# ---------------------------------- #
+train: train_res_seed_16.py
+
+model: MaKE_res_seed_16_regular.chkpt
+
+test: gen_MakE_res.py
+
+
+
+# get_equation_mr
+eq1:
+  left:
+    (eq1_left_sym1)
+    eq1_x_index
+    eq1_left_sym2
+    eq1_y_index
+  
+  right:
+    eq1_right_num1
+    eq1_right_sym
+    eq1_right_num2
+
+eq2: 
+
+
+
+# bild_dual_new_graph
+
+
+
+# process_jitu_mr_type
+
+输入数据：
+  头信息 eq1 的实体信息
+  脚信息 eq2 的实体信息

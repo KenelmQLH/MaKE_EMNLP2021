@@ -15,7 +15,8 @@ class opt:
         self.cuda = True
         self.batch_size=1
 opt = opt()
-device = torch.device('cuda:2' if opt.cuda else 'cpu')
+device = torch.device('cuda:0' if opt.cuda else 'cpu')
+
 class Generator(object):
     """Load with trained model and handle the beam search"""
     def __init__(self, opt, mmi_opt=None, mmi_g=10, mmi_lambda=0.1, mmi_gamma=0.1):

@@ -16,6 +16,8 @@ class opt:
         self.batch_size=1
 opt = opt()
 device = torch.device('cuda:5' if opt.cuda else 'cpu')
+
+
 class Generator(object):
     """Load with trained model and handle the beam search"""
     def __init__(self, opt, mmi_opt=None, mmi_g=10, mmi_lambda=0.1, mmi_gamma=0.1):
@@ -54,6 +56,7 @@ class Generator(object):
 gen = Generator(opt)
 
 data = torch.load('../processed_data/dual_graph_rev.pt')
+
 test_loader = torch.utils.data.DataLoader(
         MyDataset(
             src_word2idx = data['dict']['tgt'],
@@ -69,7 +72,10 @@ test_loader = torch.utils.data.DataLoader(
         batch_size=opt.batch_size,
         collate_fn=collate_fn,
         shuffle=False)
+
+
 all_nodes_equ, all_node_lens_equ, all_adj_matrix_equ, all_nodes_sns, al_node_lens_sns, all_adj_matrix_sns,all_scene = [],[],[],[],[],[],[]
+
 for batch in test_loader:
     equ_nodes, sns_nodes, equ_node_lens, sns_node_lens, equ_adj_matrixs, sns_adj_matrixs, tgt_seq, scene = map(lambda x: x.to(device), batch)
     all_nodes_equ.append(equ_nodes)

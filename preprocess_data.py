@@ -15,6 +15,7 @@ def process_scene(scene):
     ent2, ent3 = edge_1[:-1].split('(')
     map_scene[ent2] = ent3
     return map_scene
+
 def process_var(var):
     map_var = {}
     edge_0, edge_1 = re.split(r'\),|\)，',var)
@@ -23,6 +24,7 @@ def process_var(var):
     ent2, ent3 = edge_1[:-1].split('(')
     map_var[ent3] = ent2.replace(' ','')
     return map_var
+
 def process_mr(mr, var):
     splited_mr = mr.split(',')
     mr_dict = {}
@@ -33,14 +35,15 @@ def process_mr(mr, var):
     mr_dict['x_ent'] = processed_var['x']
     mr_dict['y_ent'] = processed_var['y']
     return mr_dict
+
 def fenge_B006(text):
     a = re.split(r'(\+|,|-|\*|/|=|!=|>=|<=|>|<|\(|\)|\[|\]|\\|\|\b\d+\w*\b|[\u4E00-\u9FA5]|\②|\①|\③|\④|\㉖|\:)', text)
     return [x.strip() for x in a if x!='']
 
 
-train_set = pd.read_excel('./data/train_equ.xlsx', index_col=None)
-dev_set = pd.read_excel('./data/dev_equ.xlsx')
-test_set = pd.read_excel('./data/test_equ.xlsx')
+train_set = pd.read_excel('./data/train_equ.xlsx', index_col=None, engine='openpyxl')
+dev_set = pd.read_excel('./data/dev_equ.xlsx', engine='openpyxl')
+test_set = pd.read_excel('./data/test_equ.xlsx', engine='openpyxl')
 
 
 
@@ -51,7 +54,7 @@ def get_equation_mr(equation1, equation2):
     splited_right_1 = fenge_B006(equ1_right)
     one_mr = []
     # 先处理第一个式子的左半部分
-    if len(splited_left_1) == 3:
+    if len(splited_left_1) == 3: # 2x+3y
         # 处理x部分
         if splited_left_1[0] =='x':
             pass
@@ -64,7 +67,7 @@ def get_equation_mr(equation1, equation2):
             pass
         else:
             one_mr.append('eq1_y_index[{}]'.format(splited_left_1[2].replace('y','')))
-    elif len(splited_left_1) == 4:
+    elif len(splited_left_1) == 4: # -2x+3y
         # 有四个部分，看起来都要做填充
         # 第一个部分的符号
         one_mr.append('eq1_left_sym1[{}]'.format(splited_left_1[0]))
@@ -86,7 +89,7 @@ def get_equation_mr(equation1, equation2):
     if len(splited_right_1) == 1:
         # 只有一个实数，应该大部分都是如此
         one_mr.append('eq1_right_num1[{}]'.format(splited_right_1[0]))
-    elif len(splited_right_1) == 3:
+    elif len(splited_right_1) == 3: # 
         # 有实数的计算存在，好吧，那就算一算吧
         one_mr.append('eq1_right_num1[{}]'.format(splited_right_1[0]))
         one_mr.append('eq1_right_sym[{}]'.format(splited_right_1[1]))
@@ -143,17 +146,18 @@ def get_equation_mr(equation1, equation2):
 
 
 
-
 new_mr = []
 for idx, row in train_set.iterrows():
     equ1, equ2 = row['关系1_trans'], row['关系2_trans']
     new_mr.append(get_equation_mr(equ1, equ2))
 train_set['mr'] = new_mr
+
 new_mr = []
 for idx, row in dev_set.iterrows():
     equ1, equ2 = row['关系1_trans'], row['关系2_trans']
     new_mr.append(get_equation_mr(equ1, equ2))
 dev_set['mr'] = new_mr
+
 new_mr = []
 for idx, row in test_set.iterrows():
     equ1, equ2 = row['关系1_trans'], row['关系2_trans']
@@ -396,10 +400,11 @@ lex_fields = ['方程二右边数字一', '方程一右边数字一', 'x_entity'
               'head信息_unit','脚信息_unit',
     '方程一y系数', '方程二y系数', '方程一x系数', '方程二x系数', '方程一右边数字二','方程二右边数字二']
 
-lex_tar = [Constants.eq2_right_num1_WORD, Constants.eq1_right_num1_WORD, Constants.x_entity_WORD, Constants.y_entity_WORD, Constants.head_info_entity_WORD, Constants.jiao_info_entity_WORD,
-    Constants.head_info_unit_WORD, Constants.jiao_info_unit_WORD,
-    Constants.eq1_y_index_WORD,Constants.eq2_y_index_WORD,
-    Constants.eq1_x_index_WORD, Constants.eq2_x_index_WORD, Constants.eq1_right_num2_WORD, Constants.eq2_right_num2_WORD]
+lex_tar = [Constants.eq2_right_num1_WORD, Constants.eq1_right_num1_WORD, Constants.x_entity_WORD, Constants.y_entity_WORD,
+           Constants.head_info_entity_WORD, Constants.jiao_info_entity_WORD,
+           Constants.head_info_unit_WORD, Constants.jiao_info_unit_WORD,
+           Constants.eq1_y_index_WORD,Constants.eq2_y_index_WORD,
+           Constants.eq1_x_index_WORD, Constants.eq2_x_index_WORD, Constants.eq1_right_num2_WORD, Constants.eq2_right_num2_WORD]
 
 lex_keymap = dict((key, idx) for idx, key in enumerate(lex_fields))
 
@@ -507,10 +512,10 @@ def process_jitu_mr_type(mr, scene, equ1, equ2, var, tou_info, jiao_info):
             lex_this[lex_keymap['方程二右边数字二']] = raw_val[:-1]
         else:
             pass
-    # 一些特殊case，需要做一下处理，这里面是为了应对除法的情况
+    # 一些特殊case，需要做一下处理，这里面是为了应对除法的情况 # ???
     if lex_this[lex_keymap['方程二右边数字一']] == lex_this[lex_keymap['方程一右边数字一']]:
         mr_dict['eq2_right_num1'] = Constants.eq1_right_num1_WORD
-    # 特殊case 如果鸡兔互换
+    # 特殊case 如果鸡兔互换 # ???
     if (lex_this[lex_keymap['方程一x系数']] == lex_this[lex_keymap['方程二y系数']]) & (lex_this[lex_keymap['方程二x系数']] == lex_this[lex_keymap['方程一y系数']]):
         mr_dict['eq2_y_index'] = Constants.eq1_x_index_WORD
         mr_dict['eq2_x_index'] = Constants.eq1_y_index_WORD
@@ -575,6 +580,7 @@ def get_after_text(text, lex_list):
                 if word in text:
                     text = text.replace(word, tar)
     return text
+
 def tokenize_word(text, sp, lex_list=None):
     words = []
     if lex_list:
@@ -614,22 +620,27 @@ all_relation = [
     '和关系_eq2_res','和关系_eq2_rev_res','被减数关系_eq1_res','被减数关系_eq1_rev_res','被减数关系_eq2_res','被减数关系_eq2_rev_res'
 ]
 
-
+print("="*100)
+print("test all_scene")
+print("="*100)
+print(all_scene)
 
 after_sent = []
 for idx, row in train_set.iterrows():
     text = row['ref']
     one_edge, one_node, lex_one = row['edges'], row['nodes'], row['lexs']
     after_sent.append(get_after_text(text, lex_one))
-with open('./processed_data/after_text_with_rev_res.txt','w') as f:
+
+with open('./processed_data/after_text_with_rev_res.txt','w', encoding="utf-8") as f:
     for line in after_sent:
         f.write(line+ '\n')
+
 text_path = './processed_data/after_text_with_rev_res.txt'
 model_save_path = './processed_data/encoded_with_rev_res'
 user_symbols = ','.join(lex_tar+all_scene+all_relation+['dummy1', 'dummy2'])
+
 spm.SentencePieceTrainer.Train('--input={}                             --model_prefix={} --model_type=bpe                             --user_defined_symbols={}                             --character_coverage=0.9996 --hard_vocab_limit=false'.format(
                                 text_path, model_save_path, user_symbols))
-
 
 sp = spm.SentencePieceProcessor()
 sp.load('./processed_data/encoded_with_rev_res.model')
@@ -667,6 +678,7 @@ def build_vocab_idx(word_insts, min_word_count):
     for sent in word_insts:
         for word in sent:
             word_count[word] += 1
+    
     ignored_word_count = 0
     for word, count in word_count.items():
         if word not in word2idx:
@@ -697,6 +709,7 @@ for idx, row in train_set.iterrows():
     train_some_ref.append(tokenized_sent)
     train_some_scene.append(get_scene(scene))
     train_lex.append(lex)
+
 dev_some_ref, dev_some_scene,dev_lex = [],[],[]
 for idx, row in dev_set.iterrows():
     edge, scene, node, ref, lex = row['edges'], row['scene'], row['nodes'], row['ref'], row['lexs']
@@ -704,6 +717,7 @@ for idx, row in dev_set.iterrows():
     dev_some_ref.append(tokenized_sent)
     dev_some_scene.append(get_scene(scene))
     dev_lex.append(lex)
+
 test_some_ref, test_some_scene,test_lex = [],[],[]
 for idx, row in test_set.iterrows():
     edge, scene, node, ref, lex = row['edges'], row['scene'], row['nodes'], row['ref'], row['lexs']
@@ -747,7 +761,6 @@ data = {
 }
 
 
-
 # save一下dual graph的数据
 data['train']['node_1'] = train_set['nodes'].tolist() #equation info node
 data['train']['node_2'] = train_set['nodes_1'].tolist() #common sense info node
@@ -767,5 +780,6 @@ data['test']['edge_1'] = test_set['edges'] .tolist()#equation info edge
 data['test']['edge_2'] = test_set['edges_1'].tolist() #common sense info edge
 
 
-torch.save(data, './processed_data/dual_graph_rev_res.pt')
+# torch.save(data, './processed_data/dual_graph_rev_res.pt')
+torch.save(data, './processed_data/dual_graph_rev_res_test.pt')
 

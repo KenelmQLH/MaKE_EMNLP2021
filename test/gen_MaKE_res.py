@@ -8,20 +8,24 @@ sys.path.append('..')
 from model.Constant import Constants
 from model.dual_graph_vae_2 import Graph2seq, ScheduledOptim
 import pandas as pd
-from dataset_dual_res import MyDataset, collate_fn
+# from dataset_dual_res import MyDataset, collate_fn
+from dataset_dual import MyDataset, collate_fn
+
 
 class opt:
     def __init__(self):
-        self.model = '../saved_model/MaKE_res_seed_16.chkpt'
+        # self.model = '../saved_model/MaKE_res_seed_16.chkpt'
+        self.model = '../saved_model/MaKE_res_seed_16_regular.chkpt'
         self.cuda = True
         self.batch_size=1
 opt = opt()
-device = torch.device('cuda:1' if opt.cuda else 'cpu')
+device = torch.device('cuda:0' if opt.cuda else 'cpu')
+
 class Generator(object):
     """Load with trained model and handle the beam search"""
     def __init__(self, opt, mmi_opt=None, mmi_g=10, mmi_lambda=0.1, mmi_gamma=0.1):
         self.opt = opt
-        self.device = torch.device('cuda:1' if opt.cuda else 'cpu')
+        self.device = torch.device('cuda:0' if opt.cuda else 'cpu')
         
         checkpoint = torch.load(opt.model,map_location=lambda storage, loc: storage)
         model_opt = checkpoint['settings']
@@ -66,10 +70,12 @@ test_loader = torch.utils.data.DataLoader(
             scene_insts = data['test']['scene'],
             tgt_insts = data['test']['ref']
         ),
-        num_workers = 4,
+        # num_workers = 4,
+        num_workers = 0,
         batch_size=opt.batch_size,
         collate_fn=collate_fn,
         shuffle=False)
+
 all_nodes_equ, all_node_lens_equ, all_adj_matrix_equ, all_nodes_sns, al_node_lens_sns, all_adj_matrix_sns,all_scene = [],[],[],[],[],[],[]
 for batch in test_loader:
     equ_nodes, sns_nodes, equ_node_lens, sns_node_lens, equ_adj_matrixs, sns_adj_matrixs, tgt_seq, scene = map(lambda x: x.to(device), batch)

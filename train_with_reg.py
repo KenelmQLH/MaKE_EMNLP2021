@@ -214,6 +214,7 @@ def sample_generation(model, train_loader, idx2word, device):
     print(show_case[1] + '\n')
     print(show_case[2] + '\n')
 
+
 def main():
     '''Main function'''
     parser = argparse.ArgumentParser()
@@ -240,6 +241,7 @@ def main():
 
     opt = parser.parse_args()
     opt.cuda = not opt.no_cuda
+    print("opt.cuda = ", opt.cuda)
 
     #====== Loading Dataset =====#
     data = torch.load(opt.data)
@@ -250,7 +252,7 @@ def main():
 
     #======= Preparing model ====#
     print(opt)
-    device = torch.device('cuda:3' if opt.cuda else 'cpu')
+    device = torch.device('cuda:0' if opt.cuda else 'cpu')
     # device = torch.device('cpu')
     graph2seq = Graph2seq(
         vocab_size=opt.vocab_size, 
